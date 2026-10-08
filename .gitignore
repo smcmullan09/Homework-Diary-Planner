@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+*.db
+*.db-journal
+*.tsbuildinfo
+coverage/
+test-results/
+artifacts/
+

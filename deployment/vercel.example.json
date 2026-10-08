@@ -1,0 +1,4 @@
+{
+  "buildCommand": "npm run build:postgres",
+  "crons": [{ "path": "/api/cron/reminders", "schedule": "* * * * *" }]
+}

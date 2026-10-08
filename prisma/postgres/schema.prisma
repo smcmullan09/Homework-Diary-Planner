@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+model Owner {
+  id String @id @default("owner")
+  email String @unique
+  passwordHash String
+  settings String @default("{}")
+  onboarded Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sessions AuthSession[]
+}
+model AuthSession {
+  id String @id
+  ownerId String
+  owner Owner @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  @@index([expiresAt])
+}
+model LoginAttempt {
+  id String @id
+  count Int @default(0)
+  windowStart DateTime @default(now())
+}
+model Subject {
+  id String @id @default(cuid())
+  name String @unique
+  colour String
+  icon String @default("book")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  homework Homework[]
+  periods TimetablePeriod[]
+  sessions StudySession[]
+}
+model Homework {
+  id String @id @default(cuid())
+  title String
+  subjectId String
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  description String @default("")
+  assignedDate String
+  dueDate String
+  dueTime String?
+  dueAt DateTime
+  priority String @default("MEDIUM")
+  status String @default("NOT_STARTED")
+  estimatedMinutes Int @default(0)
+  notes String @default("")
+  reminderOverride String?
+  completedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reminders HomeworkReminder[]
+  sessions StudySession[]
+  @@index([status, dueAt])
+  @@index([subjectId])
+}
+model HomeworkReminder {
+  id String @id @default(cuid())
+  homeworkId String
+  homework Homework @relation(fields: [homeworkId], references: [id], onDelete: Cascade)
+  channel String
+  scheduledAt DateTime
+  scheduleKey String @unique
+  status String @default("PENDING")
+  claimedAt DateTime?
+  sentAt DateTime?
+  providerMessageId String?
+  error String?
+  createdAt DateTime @default(now())
+  @@index([status, scheduledAt])
+}
+model TimetableDay {
+  id String @id @default(cuid())
+  weekday Int @unique
+  enabled Boolean @default(true)
+  periods TimetablePeriod[]
+}
+model TimetablePeriod {
+  id String @id @default(cuid())
+  dayId String
+  day TimetableDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  name String
+  slotType String @default("LESSON")
+  startTime String
+  endTime String
+  subjectId String?
+  subject Subject? @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  label String @default("")
+  room String @default("")
+  teacherName String @default("")
+  @@index([dayId, startTime])
+}
+model StudySession {
+  id String @id
+  homeworkId String?
+  homework Homework? @relation(fields: [homeworkId], references: [id], onDelete: SetNull)
+  subjectId String?
+  subject Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  startTime DateTime
+  endTime DateTime
+  durationSeconds Int
+  type String
+  @@index([startTime])
+  @@index([homeworkId])
+}
